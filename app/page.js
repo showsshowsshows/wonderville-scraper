@@ -1,113 +1,121 @@
-import Image from "next/image";
+import Runscraper from "./components/run-scraper";
+const fs = require('fs');
+const puppeteer = require('puppeteer')
+const cheerio = require('cheerio');
+let gigzArr = [];
+const endpoint = 'https://www.wonderville.nyc/events';
 
-export default function Home() {
+export default function Home({ searchParams }) {
+  if (searchParams.runScraperButton) {
+    runScraper();
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      <Runscraper />
     </main>
   );
 }
+
+const runScraper = async () => {
+  gigzArr = []; // Reset array
+  const browser = await puppeteer.launch({ headless: false });
+  const page = await browser.newPage();
+
+  console.log('Scraping data...');
+
+  // Set browser viewport
+  await page.setViewport({ width: 1300, height: 600 });
+
+  // Go to URL
+  await page.goto(endpoint, { waitUntil: 'domcontentloaded' });
+
+  // set this to null to scrape all events
+  const numberOfEventsToScrape = 5;
+  await scrapeData(page, numberOfEventsToScrape);
+
+  await browser.close();
+  console.log('Browser closed');
+
+  fs.writeFileSync('data.json', JSON.stringify(gigzArr, null, 2), 'utf-8');
+  console.log('Data written to data.json');
+  console.log(`Finished scraping data. You have ${gigzArr.length} events saved in data.json`);
+};
+
+const scrapeData = async (page, limit) => {
+  const content = await page.content();
+  const $ = cheerio.load(content);
+
+  // Limit to first 5 items directly
+  let selection = $('.eventlist-column-info')
+  selection = limit ? selection.slice(0, limit) : selection;
+  selection.each(async (i, el) => {
+    const title = $(el).find('h1.eventlist-title').text().trim();
+    const dateElement = $(el).find('time.event-date').first().attr('datetime');
+    const formattedDate = formatDateForMongoDB(dateElement);
+    const photoUrl = $(el).find('img').attr('src') || "default_image_url";
+    let excerptHtml = $(el).find('.eventlist-description').html() || "";
+    excerptHtml = excerptHtml.replace(/<br\s*\/?>/gi, '\n');
+    const excerpt = processExcerpt(excerptHtml.replace(/<[^>]*>?/gm, '').trim());
+    // Attempt to find the time using the first selector
+    let timeElement = $(el).find('time.event-time-12hr').first().text().trim();
+
+    // If the first selector doesn't find the time, try the second selector
+    if (!timeElement) {
+      timeElement = $(el).find('time.event-time-12hr-start').first().text().trim();
+    }
+
+
+    let processedExcerpt = processExcerpt(excerpt);
+
+    
+    const isDuplicate = gigzArr.some(event => event.title === title && event.date === formattedDate);
+    if (!isDuplicate) {
+      gigzArr.push({
+      title,
+      date: formattedDate,
+      genre: "¯\\_(ツ)_/¯",
+      location: "wonderville",
+      time: timeElement || "¯\\_(ツ)_/¯",
+      price: "¯\\_(ツ)_/¯",
+      isFeatured: false,
+      image: photoUrl,
+      excerpt: processedExcerpt,
+      rating: 0
+    });
+    console.log(`Scraped event: ${title}`);
+  } else {
+    console.log(`Duplicate event skipped: ${title}`);
+  }
+});
+};
+
+const processExcerpt = (text) => {
+  // Pattern to find more than four consecutive newline characters
+  const excessiveNewlinesPattern = /(\n{4,})/;
+  const parts = text.split(excessiveNewlinesPattern);
+
+  // If no excessive newlines found, return the original text
+  if (parts.length === 1) {
+    return text;
+  }
+
+  // Find the index of the first excessive newline occurrence
+  const index = parts.findIndex(part => excessiveNewlinesPattern.test(part));
+  
+  // Join the text up to the index of excessive newlines, excluding the part with excessive newlines
+  let trimmedText = parts.slice(0, index).join('');
+
+  // Trim to the last word before the excessive newlines
+  trimmedText = trimmedText.replace(/\s+\S*$/, '');
+
+  return trimmedText;
+};
+
+const formatDateForMongoDB = (dateElement) => {
+  if (!dateElement) return '';
+
+  const date = new Date(dateElement);
+  return date.toISOString().replace('.000Z', '.000+00:00');
+};
+
