@@ -7,6 +7,7 @@ const endpoint = 'https://www.wonderville.nyc/events';
 
 export default function Home({ searchParams }) {
   if (searchParams.runScraperButton) {
+    
     runScraper();
   }
 
@@ -24,7 +25,6 @@ const runScraper = async () => {
 
   console.log('Scraping data...');
 
-  // Set browser viewport
   await page.setViewport({ width: 1300, height: 600 });
 
   // Go to URL
