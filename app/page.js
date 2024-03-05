@@ -31,7 +31,7 @@ const runScraper = async () => {
   await page.goto(endpoint, { waitUntil: 'domcontentloaded' });
 
   // set this to null to scrape all events
-  const numberOfEventsToScrape = 5;
+  const numberOfEventsToScrape = null;
   await scrapeData(page, numberOfEventsToScrape);
 
   await browser.close();
@@ -65,10 +65,9 @@ const scrapeData = async (page, limit) => {
       timeElement = $(el).find('time.event-time-12hr-start').first().text().trim();
     }
 
-
     let processedExcerpt = processExcerpt(excerpt);
+    const expiresAt = calculateExpiresAt(dateElement);
 
-    
     const isDuplicate = gigzArr.some(event => event.title === title && event.date === formattedDate);
     if (!isDuplicate) {
       gigzArr.push({
@@ -81,7 +80,8 @@ const scrapeData = async (page, limit) => {
       isFeatured: false,
       image: photoUrl,
       excerpt: processedExcerpt,
-      rating: 0
+      rating: 0,
+      expiresAt
     });
     console.log(`Scraped event: ${title}`);
   } else {
@@ -118,4 +118,15 @@ const formatDateForMongoDB = (dateElement) => {
   const date = new Date(dateElement);
   return date.toISOString().replace('.000Z', '.000+00:00');
 };
+
+const calculateExpiresAt = (eventDate) => {
+  const date = new Date(eventDate);
+
+  date.setUTCDate(date.getUTCDate() + 1);
+  date.setUTCHours(2, 0, 0, 0); 
+
+  let isoString = date.toISOString(); 
+  return isoString;
+};
+
 
