@@ -102,7 +102,7 @@ const processExcerpt = (html) => {
   // Add RSVP link as a list item
   const rsvpLink = $('a.sqs-block-button-element--primary').attr('href');
   if (rsvpLink) {
-    formattedExcerpt += `<ul><li><a href='${rsvpLink}'>RSVP</a></li></ul>`;
+    formattedExcerpt += `<br><br><ul><li><a href='${rsvpLink}'>RSVP</a></li></ul>`;
   }
 
   return formattedExcerpt;
