@@ -1,13 +1,12 @@
 import Runscraper from "./components/run-scraper";
 const fs = require('fs');
-const puppeteer = require('puppeteer')
+const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 let gigzArr = [];
 const endpoint = 'https://www.wonderville.nyc/events';
 
 export default function Home({ searchParams }) {
   if (searchParams.runScraperButton) {
-    
     runScraper();
   }
 
@@ -43,73 +42,70 @@ const runScraper = async () => {
 };
 
 const scrapeData = async (page, limit) => {
+  await page.waitForSelector('.eventlist-column-info'); // Wait for the event list to load
   const content = await page.content();
   const $ = cheerio.load(content);
 
-  // Limit to first 5 items directly
-  let selection = $('.eventlist-column-info')
+  let selection = $('.eventlist-column-info');
   selection = limit ? selection.slice(0, limit) : selection;
-  selection.each(async (i, el) => {
+  selection.each((i, el) => {
     const title = $(el).find('h1.eventlist-title').text().trim();
     const dateElement = $(el).find('time.event-date').first().attr('datetime');
     const formattedDate = formatDateForMongoDB(dateElement);
     const photoUrl = $(el).find('img').attr('src') || "default_image_url";
     let excerptHtml = $(el).find('.eventlist-description').html() || "";
-    excerptHtml = excerptHtml.replace(/<br\s*\/?>/gi, '\n');
-    const excerpt = processExcerpt(excerptHtml.replace(/<[^>]*>?/gm, '').trim());
-    // Attempt to find the time using the first selector
+    const excerpt = processExcerpt(excerptHtml);
     let timeElement = $(el).find('time.event-time-12hr').first().text().trim();
 
-    // If the first selector doesn't find the time, try the second selector
     if (!timeElement) {
       timeElement = $(el).find('time.event-time-12hr-start').first().text().trim();
     }
 
-    let processedExcerpt = processExcerpt(excerpt);
-    const expiresAt = calculateExpiresAt(dateElement);
-
+    const link = $(el).find('a.sqs-block-button-element--primary').attr('href') || "";
+    console.log(link)
     const isDuplicate = gigzArr.some(event => event.title === title && event.date === formattedDate);
     if (!isDuplicate) {
       gigzArr.push({
-      title,
-      date: formattedDate,
-      genre: "¯\\_(ツ)_/¯",
-      location: "wonderville",
-      time: timeElement || "¯\\_(ツ)_/¯",
-      price: "¯\\_(ツ)_/¯",
-      isFeatured: false,
-      image: photoUrl,
-      excerpt: processedExcerpt,
-      rating: 0,
-      expiresAt
-    });
-    console.log(`Scraped event: ${title}`);
-  } else {
-    console.log(`Duplicate event skipped: ${title}`);
-  }
-});
+        title,
+        date: formattedDate,
+        genre: "¯\\_(ツ)_/¯",
+        location: "wonderville",
+        time: timeElement || "¯\\_(ツ)_/¯",
+        price: "¯\\_(ツ)_/¯",
+        isFeatured: false,
+        image: photoUrl,
+        excerpt: excerpt,
+      });
+      console.log(`Scraped event: ${title}`);
+    } else {
+      console.log(`Duplicate event skipped: ${title}`);
+    }
+  });
 };
 
-const processExcerpt = (text) => {
-  // Pattern to find more than four consecutive newline characters
-  const excessiveNewlinesPattern = /(\n{4,})/;
-  const parts = text.split(excessiveNewlinesPattern);
+const processExcerpt = (html) => {
+  const $ = cheerio.load(html);
+  let formattedExcerpt = "";
 
-  // If no excessive newlines found, return the original text
-  if (parts.length === 1) {
-    return text;
+  // Remove all links except RSVP
+  $('a').not('.sqs-block-button-element--primary').remove();
+
+  // Add paragraphs and handle breaks
+  const textParts = html.split(/<br\s*\/?>/i);
+  textParts.forEach(part => {
+    const cleanText = cheerio.load(part).text().trim();
+    if (cleanText) {
+      formattedExcerpt += `<p>${cleanText}</p>`;
+    }
+  });
+
+  // Add RSVP link as a list item
+  const rsvpLink = $('a.sqs-block-button-element--primary').attr('href');
+  if (rsvpLink) {
+    formattedExcerpt += `<ul><li><a href='${rsvpLink}'>RSVP</a></li></ul>`;
   }
 
-  // Find the index of the first excessive newline occurrence
-  const index = parts.findIndex(part => excessiveNewlinesPattern.test(part));
-  
-  // Join the text up to the index of excessive newlines, excluding the part with excessive newlines
-  let trimmedText = parts.slice(0, index).join('');
-
-  // Trim to the last word before the excessive newlines
-  trimmedText = trimmedText.replace(/\s+\S*$/, '');
-
-  return trimmedText;
+  return formattedExcerpt;
 };
 
 const formatDateForMongoDB = (dateElement) => {
@@ -118,15 +114,3 @@ const formatDateForMongoDB = (dateElement) => {
   const date = new Date(dateElement);
   return date.toISOString().replace('.000Z', '.000+00:00');
 };
-
-const calculateExpiresAt = (eventDate) => {
-  const date = new Date(eventDate);
-
-  date.setUTCDate(date.getUTCDate() + 1);
-  date.setUTCHours(2, 0, 0, 0); 
-
-  let isoString = date.toISOString(); 
-  return isoString;
-};
-
-
